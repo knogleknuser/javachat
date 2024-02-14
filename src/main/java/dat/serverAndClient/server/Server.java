@@ -14,6 +14,7 @@ public class Server implements Runnable, ExecuteWithIF
     
     public static final int QUEUE_MAX_MESSAGES = 50;
     public static final int THREADS_MAX_FOR_CHAT_MEMBERS = 100;
+    public static final int THREADS_MINIMUM_FOR_SERVER = 3;
     
     private final String name;
     
@@ -36,7 +37,7 @@ public class Server implements Runnable, ExecuteWithIF
     @Override
     public void run()
     {
-        ExecutorService executorService = Executors.newFixedThreadPool( 3 );
+        ExecutorService executorService = Executors.newFixedThreadPool( THREADS_MINIMUM_FOR_SERVER );
         
         this.executeWith( executorService );
     }

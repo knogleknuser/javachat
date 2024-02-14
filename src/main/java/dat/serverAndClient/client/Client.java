@@ -47,7 +47,7 @@ public class Client implements Runnable, ExecuteWithIF
     @Override
     public void run()
     {
-        ExecutorService executorService = Executors.newFixedThreadPool( 2 );
+        ExecutorService executorService = Executors.newFixedThreadPool( THREADS_MINIMUM );
         
         this.executeWith( executorService );
     }
