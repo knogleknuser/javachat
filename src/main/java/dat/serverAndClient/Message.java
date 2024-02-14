@@ -8,12 +8,12 @@ public record Message( String message, String sender, String receivers )
     private static final String endOfSender = Colors.RESET_ANSI + "    ";
     
     @Override
-    public synchronized String toString()
+    public String toString()
     {
         return Colors.BLUE_ANSI + this.sender + ":" + Colors.RESET_ANSI + "    " + this.message;
     }
     
-    public static synchronized Message createMessage( String rawMessage )
+    public static Message createMessage( String rawMessage )
     {
         int endOfSenderInfo = rawMessage.indexOf( endOfSender );
         
