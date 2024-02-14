@@ -10,7 +10,7 @@ public class Main4
 {
     
     private static final String IP = LOCAL_HOST; //Set this!
-    private static final String NAME = "STUDENT"; //Set this!
+    private static final String NAME = "STUDENT TEST 3"; //Set this!
     
     public static void main( String[] args )
     {
