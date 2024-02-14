@@ -20,6 +20,10 @@ public class Main
         Client client = new Client( IP, PORT_DEFAULT, NAME );
         
         client.executeWith( executorService );
+        
+        
+        //Or we just do this
+//        client.run();
     }
     
 }

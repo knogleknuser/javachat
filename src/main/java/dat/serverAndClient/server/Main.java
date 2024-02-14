@@ -19,6 +19,9 @@ public class Main
         
         server.executeWith( executorService );
         
+        //Or we just do this
+//        server.run();
+        
     }
     
 }
