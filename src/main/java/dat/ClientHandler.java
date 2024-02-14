@@ -10,94 +10,105 @@ import java.util.concurrent.ConcurrentMap;
 
 public class ClientHandler implements Runnable
 {
+    
     private final Socket clientSocket;
     private final int clientId;
+    
     private BufferedReader clientInputStream;
     private PrintWriter clientOutputStream;
-    private final ConcurrentMap<Integer, ClientHandler> clientMap;
-    private final BlockingQueue<Message> messageQueue;
-
-    public ClientHandler(Socket clientSocket, ConcurrentMap clientMap, BlockingQueue messageQueue)
+    
+    private final ConcurrentMap< String, ClientHandler > clientMap;
+    private final BlockingQueue< Message > messageQueue;
+    
+    public ClientHandler( Socket clientSocket, ConcurrentMap< String, ClientHandler > clientMap, BlockingQueue< Message > messageQueue )
     {
         this.clientMap = clientMap;
         this.messageQueue = messageQueue;
         this.clientSocket = clientSocket;
         this.clientId = clientSocket.getLocalPort();
     }
-
+    
     @Override
     public void run()
     {
-        try
-        {
-            clientInputStream = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            clientOutputStream = new PrintWriter(clientSocket.getOutputStream(), true);
-
-            String inputLine;
-            do
-            {
-                inputLine = clientInputStream.readLine();
-                if ("exit".equals(inputLine))
-                {
-                    Message message = new Message(inputLine, this.toString(), "all");
-                    messageQueue.add(message);
-                    System.out.println("Good bye ... closing down");
-                    closeResources();
-                } else if (inputLine != null)
-                {
-                    Message message = new Message(inputLine, this.toString(), "all");
-                    System.out.println("Adding to messsage queue in clienthandler: " + message.getMessage());
-                    messageQueue.add(message);
-                }
-            } while (inputLine != null && !inputLine.equals("exit"));
-
-        }
-        catch (IOException e)
-        {
-            throw new RuntimeException(e);
-        }
-        finally
-        {
-            closeResources();
-        }
-
-    }
-
-    private void closeResources() {
         try {
-            System.out.println("Closing connection and resources.");
-            if (clientInputStream != null) clientInputStream.close();
-            if (clientOutputStream != null) clientOutputStream.close();
-            if (clientSocket != null) clientSocket.close();
-        } catch (IOException e) {
-            System.err.println("Failed to close resources: " + e.getMessage());
+            this.clientInputStream = new BufferedReader( new InputStreamReader( this.clientSocket.getInputStream() ) );
+            this.clientOutputStream = new PrintWriter( this.clientSocket.getOutputStream(), true );
+            
+            String inputLine;
+            do {
+                
+                inputLine = this.clientInputStream.readLine();
+                
+                if ( "exit".equals( inputLine ) ) {
+                    Message message = new Message( inputLine, this.toString(), "all" );
+                    this.messageQueue.add( message );
+                    System.out.println( "Good bye ... closing down" );
+                    this.closeResources();
+                    
+                } else if ( inputLine != null ) {
+                    Message message = new Message( inputLine, this.toString(), "all" );
+                    System.out.println( "Adding to messsage queue in clienthandler: " + message.message() );
+                    this.messageQueue.add( message );
+                }
+                
+            } while ( inputLine != null && !inputLine.equals( "exit" ) );
+            
+        } catch ( IOException e ) {
+            throw new RuntimeException( e );
+            
+        } finally {
+            this.closeResources();
+        }
+        
+    }
+    
+    private void closeResources()
+    {
+        try {
+            System.out.println( "Closing connection and resources." );
+            
+            if ( this.clientInputStream != null ) {
+                this.clientInputStream.close();
+            }
+            
+            if ( this.clientOutputStream != null ) {
+                this.clientOutputStream.close();
+            }
+            
+            if ( this.clientSocket != null ) {
+                this.clientSocket.close();
+            }
+            
+        } catch ( IOException e ) {
+            System.err.println( "Failed to close resources: " + e.getMessage() );
         }
     }
-
-    public void addMessage(Message message)
+    
+    public void addMessage( Message message )
     {
-        messageQueue.add(message);
+        this.messageQueue.add( message );
     }
-
-    public void sendMessage(String message)
+    
+    public void sendMessage( String message )
     {
-        clientOutputStream.println(message);
+        this.clientOutputStream.println( message );
     }
-
+    
     public int getClientId()
     {
-        return clientId;
+        return this.clientId;
     }
-
+    
     public Socket getClientSocket()
     {
-        return clientSocket;
+        return this.clientSocket;
     }
-
+    
     @Override
     public String toString()
     {
-        String clientInfo = clientSocket.getInetAddress().toString() + ":" + clientSocket.getPort();
-        return clientInfo;
+        return this.clientSocket.getInetAddress().toString() + ":" + this.clientSocket.getPort();
     }
+    
 }
