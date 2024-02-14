@@ -8,7 +8,7 @@ import static dat.util.ConnectionMaster.PORT_DEFAULT;
 public class Main
 {
     
-    private static final String NAME = "SERVER"; //Set this!
+    private static final String NAME = "SERVER";
     
     public static void main( String[] args )
     {
