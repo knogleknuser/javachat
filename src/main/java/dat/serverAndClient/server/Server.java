@@ -173,8 +173,13 @@ public class Server implements Runnable, ExecuteWithIF
     public void close()
     {
         try {
-            this.serverClientListener.close();
-            this.serverSocket.close();
+            if ( this.serverClientListener != null  ) {
+                this.serverClientListener.close();
+            }
+            
+            if ( this.serverSocket != null  ) {
+                this.serverSocket.close();
+            }
             
         } catch ( IOException e ) {
             throw new RuntimeException( e );
