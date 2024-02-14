@@ -50,7 +50,8 @@ public class ServerClient
             }
             
         } catch ( IOException e ) {
-            System.err.println( "Failed to close resources: " + e.getMessage() );
+            System.err.println( "SERVERCLIENT: EXCEPTION IO: Failed to close resources: " );
+            e.printStackTrace();
         }
     }
     

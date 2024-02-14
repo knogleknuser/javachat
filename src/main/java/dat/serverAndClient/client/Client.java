@@ -31,7 +31,7 @@ public class Client implements Runnable, ExecuteWithIF
         this.IP = IP;
         this.PORT = PORT;
         this.name = name;
-        this.scanner = scanner;
+        this.scanner = scanner; //For making it testable
     }
     
     public Client( String IP, int PORT, String name )
@@ -77,7 +77,7 @@ public class Client implements Runnable, ExecuteWithIF
     
     public void sendMessage()
     {
-        System.out.println( "Send messages to chat server:" );
+        System.out.println( "Send messages started:" );
         
         try {
             String lineToSend;
@@ -90,7 +90,8 @@ public class Client implements Runnable, ExecuteWithIF
             }
             
         } catch ( Exception e ) {
-            System.err.println( "Error in sendMessages: " + e.getMessage() );
+            System.err.println( "CLIENT: EXCEPTION: Error in sendMessages: " );
+            e.printStackTrace();
             
         } finally {
             this.closeResources();
@@ -116,7 +117,9 @@ public class Client implements Runnable, ExecuteWithIF
             }
             
         } catch ( IOException e ) {
-            System.err.println( "Error in Client Receive Message: " + e.getMessage() );
+            System.err.println( "CLIENT: EXCEPTION IO: Receive Message: " );
+            e.printStackTrace();
+            this.closeResources();
             
         } finally {
             this.closeResources();
@@ -137,7 +140,8 @@ public class Client implements Runnable, ExecuteWithIF
             }
             
         } catch ( IOException e ) {
-            System.err.println( "Failed to close resources: " + e.getMessage() );
+            System.err.println( "CLIENT: EXCEPTION IO: Failed to close resources: " );
+            e.printStackTrace();
         }
     }
     

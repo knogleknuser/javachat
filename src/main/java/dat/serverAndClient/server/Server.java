@@ -16,22 +16,33 @@ public class Server implements Runnable, ExecuteWithIF
     public static final int THREADS_MAX_FOR_CHAT_MEMBERS = 100;
     public static final int THREADS_MINIMUM_FOR_SERVER = 3;
     
-    private final String name;
-    
     private final int port;
+    private final String name;
+    private final Scanner scanner;
+    
     private ServerSocket serverSocket;
     
     private final ConcurrentMap< String, ServerClient > clientMap = new ConcurrentHashMap<>();
     private final BlockingQueue< Message > messageQueue = new ArrayBlockingQueue<>( QUEUE_MAX_MESSAGES );
     
-    private final ServerClientManager serverClientManager = new ServerClientManager( THREADS_MAX_FOR_CHAT_MEMBERS );
+    private final ServerClientListener serverClientListener = new ServerClientListener( THREADS_MAX_FOR_CHAT_MEMBERS );
     
     
     
-    public Server( int port, String name )
+    public Server( int port, String name, Scanner scanner )
     {
         this.port = port;
         this.name = name;
+        this.scanner = scanner; //For making it testable
+    }
+    
+    public Server( int port, String name )
+    {
+        this(
+                port,
+                name,
+                new Scanner( System.in )
+        );
     }
     
     @Override
@@ -69,20 +80,21 @@ public class Server implements Runnable, ExecuteWithIF
     
     public void connect()
     {
-        try {
+        do {
             
-            do {
+            try {
                 Socket clientSocket = this.serverSocket.accept();  // blocking call
                 
-                this.serverClientManager.addClient( clientSocket );
+                this.addClient( clientSocket );
                 
-            } while ( !this.serverSocket.isClosed() );
+            } catch ( IOException e ) {
+                System.out.println( "SERVER: EXCEPTION IO: On .accept()" );
+                e.printStackTrace();
+            }
             
-        } catch ( IOException e ) {
-            throw new RuntimeException( e );
-        }
+        } while ( !this.serverSocket.isClosed() );
         
-        System.out.println( "Stopping Server Connect Thread" );
+        System.out.println( "SERVER: Stopping Server Connect Thread" );
     }
     
     private void broadcastMessages()
@@ -102,11 +114,41 @@ public class Server implements Runnable, ExecuteWithIF
             }
             
         } catch ( InterruptedException e ) {
-            System.err.println( "Server was interrupted: " + e.getMessage() );
+            System.err.println( "SERVER: was interrupted: " + e.getMessage() );
+            e.printStackTrace();
             Thread.currentThread().interrupt();
         }
         
-        System.out.println( "Stopping Server Broadcast Thread" );
+        System.out.println( "SERVER: Stopping Server Broadcast Thread" );
+    }
+    
+    public void serverConsole()
+    {
+        String inputLine;
+        Message message;
+        
+        // send messages to server. The ressources will be close by receiver
+        while ( ( inputLine = this.scanner.nextLine() ) != null ) {
+            message = new Message( inputLine, this.name, "all" );
+            this.messageQueue.add( message );
+        }
+        
+        System.out.println( "SERVER: Stopping Server Console Thread" );
+    }
+    
+    public void addClient( Socket clientSocket )
+    {
+        try {
+            ServerClient serverClient = new ServerClient( clientSocket );
+            Server.this.clientMap.put( serverClient.toString(), serverClient );
+            
+            this.serverClientListener.listenToClient( serverClient );
+            
+        } catch ( IOException e ) {
+            System.out.println( "SERVER: IO EXCEPTION: On add Client" );
+            e.printStackTrace();
+        }
+        
     }
     
     private void broadcastMessage( String message )
@@ -114,31 +156,24 @@ public class Server implements Runnable, ExecuteWithIF
         System.out.println( message );
         
         for ( ServerClient serverClient : this.clientMap.values() ) {
-            serverClient.sendMessage( message );
+            
+            try {
+                
+                if ( serverClient != null ) {
+                    serverClient.sendMessage( message );
+                }
+                
+            } catch ( Exception e ) {
+                System.out.println( "SERVER: EXCEPTION: On sendMessage" );
+                e.printStackTrace();
+            }
         }
-    }
-    
-    
-    public void serverConsole()
-    {
-        Scanner scanner = new Scanner( System.in );
-        
-        String inputLine;
-        Message message;
-        
-        // send messages to server. The ressources will be close by receiver
-        while ( ( inputLine = scanner.nextLine() ) != null ) {
-            message = new Message( inputLine, this.name, "all" );
-            this.messageQueue.add( message );
-        }
-        
-        System.out.println( "Stopping Server Console Thread" );
     }
     
     public void close()
     {
         try {
-            this.serverClientManager.close();
+            this.serverClientListener.close();
             this.serverSocket.close();
             
         } catch ( IOException e ) {
@@ -149,28 +184,19 @@ public class Server implements Runnable, ExecuteWithIF
     
     
     
-    public class ServerClientManager
+    public class ServerClientListener
     {
         
         private final ExecutorService executorService;
         
-        public ServerClientManager( int maxActiveChatMembers )
+        public ServerClientListener( int maxActiveChatMembers )
         {
             this.executorService = Executors.newFixedThreadPool( maxActiveChatMembers );
         }
         
-        public void addClient( Socket clientSocket )
+        public void listenToClient( ServerClient serverClient )
         {
-            try {
-                ServerClient serverClient = new ServerClient( clientSocket );
-                Server.this.clientMap.put( serverClient.toString(), serverClient );
-                
-                this.executorService.submit( () -> this.receiveThisClientsMessages( serverClient ) );
-                
-            } catch ( IOException ignored ) {
-            
-            }
-            
+            this.executorService.submit( () -> this.receiveThisClientsMessages( serverClient ) );
         }
         
         private void receiveThisClientsMessages( ServerClient serverClient )
@@ -188,6 +214,7 @@ public class Server implements Runnable, ExecuteWithIF
                 } while ( serverClient.isRunning() );
                 
             } catch ( IOException e ) {
+                Server.this.clientMap.remove( serverClient.toString() );
                 throw new RuntimeException( e );
             }
         }
