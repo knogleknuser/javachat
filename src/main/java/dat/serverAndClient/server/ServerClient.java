@@ -9,6 +9,7 @@ import java.net.Socket;
 
 public class ServerClient
 {
+    
     private final Socket clientSocket;
     
     private final PrintWriter outputStream;
@@ -60,7 +61,8 @@ public class ServerClient
         return this.lastInput;
     }
     
-    public boolean isRunning(){
+    public boolean isRunning()
+    {
         if ( this.clientSocket.isBound() && this.clientSocket.isConnected() && !this.clientSocket.isClosed() ) {
             return true;
         }

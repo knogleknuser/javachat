@@ -17,7 +17,7 @@ public class Main
         ExecutorService executorService = Executors.newFixedThreadPool( Client.THREADS_MINIMUM );
         
         System.out.println( "Starting extra ChatClient" );
-        Client client = new Client( IP, PORT_DEFAULT,NAME );
+        Client client = new Client( IP, PORT_DEFAULT, NAME );
         
         client.executeWith( executorService );
     }

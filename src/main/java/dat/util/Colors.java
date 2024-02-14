@@ -2,7 +2,7 @@ package dat.util;
 
 public class Colors
 {
-
+    
     public static final String RESET_ANSI = "\u001B[0m";
     public static final String BLACK_ANSI = "\u001B[30m";
     public static final String RED_ANSI = "\u001B[31m";
@@ -16,4 +16,5 @@ public class Colors
     //Idk what I am doing
     public static final String BROWN_ANSI = "\u001b[33;40m";
     public static final String ORANGE_ANSI = "\u001b[31;40m";
+    
 }

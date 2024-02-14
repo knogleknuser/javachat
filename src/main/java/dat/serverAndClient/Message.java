@@ -17,8 +17,8 @@ public record Message( String message, String sender, String receivers )
     {
         int endOfSenderInfo = rawMessage.indexOf( endOfSender );
         
-        String sender = rawMessage.substring( 0, endOfSenderInfo-1 );
-        String message = rawMessage.substring( endOfSenderInfo+endOfSender.length() );
+        String sender = rawMessage.substring( 0, endOfSenderInfo - 1 );
+        String message = rawMessage.substring( endOfSenderInfo + endOfSender.length() );
         String receivers = "all";
         
         return new Message( message, sender, receivers );

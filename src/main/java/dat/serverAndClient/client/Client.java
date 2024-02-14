@@ -107,7 +107,7 @@ public class Client implements Runnable, ExecuteWithIF
             
             while ( ( recievedLine = this.inputStream.readLine() ) != null ) {
                 
-                System.out.println(recievedLine  );
+                System.out.println( recievedLine );
                 
                 if ( "exit".equals( recievedLine ) ) {
                     System.out.println( "Client sent 'exit' - closing connection." );
