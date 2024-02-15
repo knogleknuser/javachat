@@ -2,38 +2,74 @@ package dat.serverAndClient.server;
 
 import dat.serverAndClient.Message;
 import dat.executeWith.ExecuteWithIF;
+import dat.util.Colors;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.*;
 
 public class Server implements Runnable, ExecuteWithIF
 {
     
-    public static final int QUEUE_MAX_MESSAGES = 50;
-    public static final int THREADS_MAX_FOR_CHAT_MEMBERS = 100;
-    public static final int THREADS_MINIMUM_FOR_SERVER = 3;
+    public static final String COMMAND_START = "/";
+    public static final String COMMAND_HELP = COMMAND_START + "help";
+    public static final String COMMAND_EXIT = COMMAND_START + "exit";
+    
+    public static final String COMMAND_COMPUTER_START = Colors.RESET_ANSI;
+    public static final String COMMAND_COMPUTER_MYNAME = COMMAND_COMPUTER_START + "myname";
+    
+    public static final int MESSAGE_QUEUE_SIZE_DEFAULT = 50;
+    public static final int MAX_ACTIVE_CLIENTS_DEFAULT = 100; //_AND_MAX_THREADS_FOR_CLIENTS_DEFAULT
+    public static final int MIN_SERVER_THREADS = 3;
     
     private final int port;
     private final String name;
+    private final int messageQueueSize;
+    private final int maxActiveClients;
     private final Scanner scanner;
     
     private ServerSocket serverSocket;
     
+    private final BlockingQueue< Message > messageQueue;
     private final ConcurrentMap< String, ServerClient > clientMap = new ConcurrentHashMap<>();
-    private final BlockingQueue< Message > messageQueue = new ArrayBlockingQueue<>( QUEUE_MAX_MESSAGES );
     
-    private final ServerClientListener serverClientListener = new ServerClientListener( THREADS_MAX_FOR_CHAT_MEMBERS );
+    private final ArrayList< Future< ? > > serverThreads = new ArrayList<>();
+    private final ArrayList< Future< ? > > clientsThreads = new ArrayList<>();
+    private ExecutorService localExecutorService = null;
     
     
     
-    public Server( int port, String name, Scanner scanner )
+    
+    
+    
+    
+    //Constructors---------------------------------------------------------------------------------------
+    public Server( int port, String name, int messageQueueSize, int maxActiveClients, Scanner scanner )
     {
+        //Assign Input--------------------------
         this.port = port;
         this.name = name;
+        this.messageQueueSize = checkMessageQueueSize( messageQueueSize );
+        this.maxActiveClients = checkMaxActiveClients( maxActiveClients );
         this.scanner = scanner; //For making it testable
+        
+        //Final Setup------------------------------
+        this.messageQueue = new ArrayBlockingQueue<>( this.messageQueueSize );
+    }
+    
+    public Server( int port, String name, int messageQueueSize, int maxActiveClients )
+    {
+        this(
+                port,
+                name,
+                messageQueueSize,
+                maxActiveClients,
+                new Scanner( System.in )
+        );
     }
     
     public Server( int port, String name )
@@ -41,16 +77,47 @@ public class Server implements Runnable, ExecuteWithIF
         this(
                 port,
                 name,
+                MESSAGE_QUEUE_SIZE_DEFAULT,
+                MAX_ACTIVE_CLIENTS_DEFAULT,
                 new Scanner( System.in )
         );
     }
     
+    
+    
+    
+    
+    
+    
+    //Constructor helpers--------------------------------------------------------------------------------
+    private static int checkMessageQueueSize( int messageQueueSize )
+    {
+        if ( messageQueueSize > 1 ) {
+            return messageQueueSize;
+        }
+        return MESSAGE_QUEUE_SIZE_DEFAULT;
+    }
+    
+    private static int checkMaxActiveClients( int maxActiveClients )
+    {
+        if ( maxActiveClients > 1 ) {
+            return maxActiveClients;
+        }
+        return MAX_ACTIVE_CLIENTS_DEFAULT;
+    }
+    
+    
+    
+    
+    
+    
+    //Run Server-------------------------------------------------------------------------------------------
     @Override
     public void run()
     {
-        ExecutorService executorService = Executors.newFixedThreadPool( THREADS_MINIMUM_FOR_SERVER );
+        this.localExecutorService = Executors.newFixedThreadPool( MIN_SERVER_THREADS + this.maxActiveClients );
         
-        this.executeWith( executorService );
+        this.executeWith( this.localExecutorService );
     }
     
     @Override
@@ -61,10 +128,14 @@ public class Server implements Runnable, ExecuteWithIF
         try {
             this.setupSocket();
             
-            executorService.submit( () -> this.connect() );
-            executorService.submit( () -> this.broadcastMessages() );
+            Future< ? > threadConnect = executorService.submit( () -> this.connect( executorService ) ); //I hate that we are throwing the service down the method hirachy TO-DO: Don't do that
+            Future< ? > threadBroadcaster = executorService.submit( () -> this.broadcastMessagesFromQueue() );
             
-            executorService.submit( () -> this.serverConsole() );
+            Future< ? > threadServerConsole = executorService.submit( () -> this.serverConsole() );
+            
+            this.serverThreads.add( threadConnect );
+            this.serverThreads.add( threadBroadcaster );
+            this.serverThreads.add( threadServerConsole );
             
         } catch ( IOException e ) {
             this.close();
@@ -73,19 +144,27 @@ public class Server implements Runnable, ExecuteWithIF
         //Then go die
     }
     
-    public void setupSocket() throws IOException
+    
+    
+    
+    
+    
+    
+    
+    //Setup, Connect, Send, Console--------------------------------------------------------------------------------------------------
+    public void setupSocket() throws IOException  //ServerSocket
     {
         this.serverSocket = new ServerSocket( this.port );
     }
     
-    public void connect()
+    public void connect( ExecutorService executorService )  //.accept() forever....                                //ExecutorService executorService<-I hate this
     {
         do {
             
             try {
                 Socket clientSocket = this.serverSocket.accept();  // blocking call
                 
-                this.addClient( clientSocket );
+                executorService.submit( () -> this.addClient( clientSocket, executorService ) ); //We wanna listen again ASAP, so some other thread can finish this
                 
             } catch ( IOException e ) {
                 System.out.println( "SERVER: EXCEPTION IO: On .accept()" );
@@ -97,19 +176,19 @@ public class Server implements Runnable, ExecuteWithIF
         System.out.println( "SERVER: Stopping Server Connect Thread" );
     }
     
-    private void broadcastMessages()
+    private void broadcastMessagesFromQueue() //sendMessage
     {
         try {
             
-            Message message = new Message( "Server started", this.name, "all" );
-            this.broadcastMessage( message.toString() );
+            Message message = new Message( "Server started", this.name, Message.ALL );
+            this.broadcastAMessage( message.toString() );
             
             
             while ( !Thread.currentThread().isInterrupted() ) {
                 
                 message = this.messageQueue.take();
                 
-                this.broadcastMessage( message.toString() );
+                this.broadcastAMessage( message.toString() );
                 
             }
             
@@ -122,36 +201,7 @@ public class Server implements Runnable, ExecuteWithIF
         System.out.println( "SERVER: Stopping Server Broadcast Thread" );
     }
     
-    public void serverConsole()
-    {
-        String inputLine;
-        Message message;
-        
-        // send messages to server. The ressources will be close by receiver
-        while ( ( inputLine = this.scanner.nextLine() ) != null ) {
-            message = new Message( inputLine, this.name, "all" );
-            this.messageQueue.add( message );
-        }
-        
-        System.out.println( "SERVER: Stopping Server Console Thread" );
-    }
-    
-    public void addClient( Socket clientSocket )
-    {
-        try {
-            ServerClient serverClient = new ServerClient( clientSocket );
-            Server.this.clientMap.put( serverClient.toString(), serverClient );
-            
-            this.serverClientListener.listenToClient( serverClient );
-            
-        } catch ( IOException e ) {
-            System.out.println( "SERVER: IO EXCEPTION: On add Client" );
-            e.printStackTrace();
-        }
-        
-    }
-    
-    private void broadcastMessage( String message )
+    private void broadcastAMessage( String message )
     {
         System.out.println( message );
         
@@ -170,65 +220,244 @@ public class Server implements Runnable, ExecuteWithIF
         }
     }
     
-    public void close()
+    public void serverConsole()
     {
-        try {
-            if ( this.serverClientListener != null  ) {
-                this.serverClientListener.close();
+        String inputLine;
+        Message message;
+        
+        // send messages to server. The ressources will be close by receiver
+        while ( ( inputLine = this.scanner.nextLine() ) != null ) {
+            
+            if ( !isCommand( inputLine ) ) {
+                message = new Message( inputLine, this.name, Message.ALL );
+                this.messageQueue.add( message );
+                
+            } else {
+                this.runCommand( inputLine );
             }
             
-            if ( this.serverSocket != null  ) {
-                this.serverSocket.close();
-            }
-            
-        } catch ( IOException e ) {
-            throw new RuntimeException( e );
         }
         
+        System.out.println( "SERVER: Stopping Server Console Thread" );
     }
     
     
     
-    public class ServerClientListener
+    
+    
+    
+    
+    
+    
+    
+    //Add Client and Listen to their messages----------------------------------------------------------------------
+    private void addClient( Socket clientSocket, ExecutorService executorService ) //ExecutorService executorService<-I hate this
     {
-        
-        private final ExecutorService executorService;
-        
-        public ServerClientListener( int maxActiveChatMembers )
-        {
-            this.executorService = Executors.newFixedThreadPool( maxActiveChatMembers );
+        try {
+            ServerClient serverClient = new ServerClient( clientSocket );
+            Server.this.clientMap.put( serverClient.toString(), serverClient );
+            
+            //First message is always name
+            setServerClientName( serverClient );
+            
+            clientConnected(serverClient);
+            
+            this.listenToClientOnNewThread( serverClient, executorService );
+            
+        } catch ( IOException e ) {
+            System.out.println( "SERVER: IO EXCEPTION: On add Client" );
+            e.printStackTrace();
         }
         
-        public void listenToClient( ServerClient serverClient )
-        {
-            this.executorService.submit( () -> this.receiveThisClientsMessages( serverClient ) );
+    }
+    
+    private void listenToClientOnNewThread( ServerClient serverClient, ExecutorService executorService ) //ExecutorService executorService<-I hate this
+    {
+        Future< ? > threadAClient = executorService.submit( () -> this.listenToClient( serverClient ) );
+        
+        this.clientsThreads.add( threadAClient ); //Does not remove clients who disconnect -TO-DO fix this!
+    }
+    
+    private void listenToClient( ServerClient serverClient )
+    {
+        try {
+            
+            do {
+                serverClient.receiveMessage();
+                String rawMessage = serverClient.getLastInput();
+                
+                Message message = Message.createMessage( rawMessage );
+                
+                Server.this.messageQueue.add( message );
+                
+            } while ( serverClient.isRunning() );
+            
+        } catch ( IOException e ) {
+            e.printStackTrace();
         }
         
-        private void receiveThisClientsMessages( ServerClient serverClient )
-        {
-            try {
-                
-                do {
-                    serverClient.receiveMessage();
-                    String rawMessage = serverClient.getLastInput();
-                    
-                    Message message = Message.createMessage( rawMessage );
-                    
-                    Server.this.messageQueue.add( message );
-                    
-                } while ( serverClient.isRunning() );
-                
-            } catch ( IOException e ) {
-                Server.this.clientMap.remove( serverClient.toString() );
-                throw new RuntimeException( e );
+        serverClient.close();
+        this.clientDisconnected(serverClient);
+        Server.this.clientMap.remove( serverClient.toString() );
+    }
+    
+    private static void setServerClientName( ServerClient serverClient ) throws IOException
+    {
+        serverClient.receiveMessage();
+        String rawMessage = serverClient.getLastInput();
+        
+        Message message = Message.createMessage( rawMessage );
+        
+        if ( !Objects.equals( message.message(), COMMAND_COMPUTER_MYNAME ) ) {  //Check it actually is the name setter request
+            System.err.println( "SERVER: CLient's first message was wrong?" );
+        }
+        
+        serverClient.setName( message.sender() );
+    }
+    
+    private void clientConnected( ServerClient serverClient )
+    {
+        Message message = new Message( Colors.BLUE_ANSI+serverClient.getName()+Colors.RESET_ANSI+" has connected.", this.name,Message.ALL );
+        
+        this.broadcastAMessage( message.toString() );
+    }
+    
+    private void clientDisconnected( ServerClient serverClient )
+    {
+        Message message = new Message( Colors.BLUE_ANSI+serverClient.getName()+Colors.RESET_ANSI+" has disconnected.", this.name,Message.ALL );
+        
+        this.broadcastAMessage( message.toString() );
+    }
+    
+    
+    
+    
+    
+    //ServerConsoleCommands
+    public static boolean isCommand( String inputLine )
+    {
+        if ( inputLine.startsWith( COMMAND_START ) ) {
+            return true;
+        }
+        return false;
+    }
+    
+    public static void printCommandHelp()
+    {
+        System.out.println( COMMAND_HELP );
+        System.out.println( COMMAND_EXIT );
+    }
+    
+    private void runCommand( String inputLine )
+    {
+        if ( !isCommand( inputLine ) ) {
+            System.err.println( "ERROR: SERVER-CONSOLE THOUGHT NON-COMMAND WAS A COMMAND?" );
+        }
+        
+        switch ( inputLine ) {
+            
+            case COMMAND_HELP:
+                printCommandHelp();
+                return;
+            
+            case COMMAND_EXIT:
+                this.close();
+                return;
+            
+            default:
+                System.out.println( "\"" + inputLine + "\" is not a recognized command" );
+                return;
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    //Close--------------------------------------------------------------------------------------------
+    public void close()
+    {
+        System.out.println( "SERVER: Closing down....." );
+        
+        try {
+            
+            if ( this.serverSocket != null ) {
+                this.serverSocket.close();
+                this.serverSocket = null;
             }
+            
+            if ( this.localExecutorService != null ) {
+                this.localExecutorService.shutdownNow();
+                this.localExecutorService = null;
+            }
+            
+            System.out.println("Amount of clients at shutdown: "+this.clientMap.size());
+            
+            this.closeClients();
+            
+            this.threadsServerClose();
+            
+            this.threadsClientsClose();
+            
+            this.scanner.close();
+            
+        } catch ( IOException e ) {
+            throw new RuntimeException( e );
         }
-        
-        public void close()
-        {
-            this.executorService.shutdownNow();
+        System.out.println( "SERVER: finished closing!" );
+    }
+    
+    private void closeClients()
+    {
+        for ( ServerClient serverClient : this.clientMap.values() ) {
+            serverClient.close();
         }
-        
+        this.clientMap.clear();
+    }
+    
+    private void threadsServerClose()
+    {
+        for ( Future< ? > serverThread : this.serverThreads ) {
+            serverThread.cancel( true );
+        }
+        this.serverThreads.clear();
+    }
+    
+    private void threadsClientsClose()
+    {
+        for ( Future< ? > clientsThread : this.clientsThreads ) {
+            clientsThread.cancel( true );
+        }
+        this.clientsThreads.clear();
+    }
+    
+    
+    
+    
+    
+    
+    //Getters------------------------------------------------------------------------------------
+    public int getPort()
+    {
+        return this.port;
+    }
+    
+    public String getName()
+    {
+        return this.name;
+    }
+    
+    public int getMessageQueueSize()
+    {
+        return this.messageQueueSize;
+    }
+    
+    public int getMaxActiveClients()
+    {
+        return this.maxActiveClients;
     }
     
 }

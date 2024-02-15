@@ -24,6 +24,9 @@ public class Main
         
         //Or we just do this
 //        client.run();
+        
+        executorService.shutdown();
+
     }
     
 }

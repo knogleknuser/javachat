@@ -16,7 +16,11 @@ public class ServerClient
     private final BufferedReader inputStream;
     
     private String lastInput;
+    private String name;
     
+    
+    
+    //Constructor---------------------------------------------------------------------------
     public ServerClient( Socket clientSocket ) throws IOException
     {
         this.clientSocket = clientSocket;
@@ -27,20 +31,31 @@ public class ServerClient
     
     
     
+    
+    //Send, Receive, Close-----------------------------------------------------------------------
     public void sendMessage( String message )
     {
+        if ( !this.isRunning() ) {
+            this.close();
+        }
+        
         this.outputStream.println( message );
+        
     }
     
     public void receiveMessage() throws IOException
     {
+        if ( !this.isRunning() ) {
+            this.close();
+        }
+        
         this.lastInput = this.inputStream.readLine();
     }
     
-    private void closeResources()
+    public void close()
     {
+        System.out.println( "SERVERCLIENT: Closing down..." );
         try {
-            System.out.println( "Closing connection and resources." );
             
             if ( this.outputStream != null ) {
                 this.outputStream.close();
@@ -50,12 +65,21 @@ public class ServerClient
                 this.inputStream.close();
             }
             
+            if ( this.clientSocket != null ) {
+                this.clientSocket.close();
+            }
+            
         } catch ( IOException e ) {
             System.err.println( "SERVERCLIENT: EXCEPTION IO: Failed to close resources: " );
             e.printStackTrace();
         }
+        
+        System.out.println( "SERVERCLIENT: Finished shutdown" );
     }
     
+    
+    
+    //Getters------------------------------------------------------------------
     public String getLastInput()
     {
         return this.lastInput;
@@ -69,4 +93,18 @@ public class ServerClient
         return false;
     }
     
+    
+    
+    //Set and Get Name----------------------------------------------------------
+    public void setName( String name )
+    {
+        this.name = name;
+    }
+    
+    public String getName()
+    {
+        return this.name;
+    }
+    
+
 }
