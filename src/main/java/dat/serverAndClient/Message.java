@@ -4,7 +4,7 @@ import dat.util.Colors;
 
 import java.util.Objects;
 
-public record Message( String message, String sender, String receivers )
+public record Message( String message, String sender, String receivers ) //TODO: unit tests and integration tests
 {
     
     public static final String ALL = "@AlL";

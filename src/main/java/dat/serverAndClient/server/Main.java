@@ -22,8 +22,8 @@ public class Main
         
         //Or we just do this
 //        server.run();
-    
-    
+        
+        //TODO: Shutdown executorService once server stops, we cannot use the same trick as the clients as the server actually needs more threads
     }
     
 }

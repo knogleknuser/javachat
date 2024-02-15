@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 
-public class ServerClient
+public class ServerClient //TODO: unit tests and integration tests
 {
     
     private final Socket clientSocket;
@@ -52,7 +52,7 @@ public class ServerClient
         this.lastInput = this.inputStream.readLine();
     }
     
-    public void close()
+    public void close()   //TODO: don't spam the console with repeat and errors when closing
     {
         System.out.println( "SERVERCLIENT: Closing down..." );
         try {
@@ -87,7 +87,7 @@ public class ServerClient
     
     public boolean isRunning()
     {
-        if ( this.clientSocket.isBound() && this.clientSocket.isConnected() && !this.clientSocket.isClosed() ) {
+        if ( this.clientSocket.isBound() && this.clientSocket.isConnected() && !this.clientSocket.isClosed() ) { //TODO: make this work, cannot currently detect clients who have disconnected. Will also free up the thread, currently it is lost forever(until server restart)
             return true;
         }
         return false;

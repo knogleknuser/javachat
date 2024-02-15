@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class Client implements Runnable, ExecuteWithIF
+public class Client implements Runnable, ExecuteWithIF //TODO: unit tests and integration tests
 {
     
     public static final int THREADS_MINIMUM = 2;
@@ -132,7 +132,7 @@ public class Client implements Runnable, ExecuteWithIF
     private void firstConnectedMessages()
     {
         //Connected, send name!
-        Message message = new Message( Server.COMMAND_COMPUTER_MYNAME, this.name, Message.ALL );
+        Message message = new Message( Server.COMMAND_COMPUTER_MYNAME, this.name, Message.ALL );  //TODO: select recipient
         this.outputStream.println( message );
     }
     
@@ -165,7 +165,7 @@ public class Client implements Runnable, ExecuteWithIF
     
     
     //Close----------------------------------------------------------------------------------
-    public void close()
+    public void close()  //TODO: don't spam the console with repeat and errors when closing
     {
         System.out.println( "CLIENT: Closing down..." );
         try {
@@ -220,7 +220,7 @@ public class Client implements Runnable, ExecuteWithIF
                 Server.printCommandHelp();
                 return;
             
-            case Server.COMMAND_EXIT:
+            case Server.COMMAND_EXIT:  //TODO: tell server we are leaving
                 this.close();
                 return;
             

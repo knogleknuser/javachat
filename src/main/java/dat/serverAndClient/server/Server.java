@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.*;
 
-public class Server implements Runnable, ExecuteWithIF
+public class Server implements Runnable, ExecuteWithIF //TODO: unit tests and integration tests
 {
     
     public static final String COMMAND_START = "/";
@@ -128,7 +128,7 @@ public class Server implements Runnable, ExecuteWithIF
         try {
             this.setupSocket();
             
-            Future< ? > threadConnect = executorService.submit( () -> this.connect( executorService ) ); //I hate that we are throwing the service down the method hirachy TO-DO: Don't do that
+            Future< ? > threadConnect = executorService.submit( () -> this.connect( executorService ) ); //I hate that we are throwing the service down the method hirachy TODO: Don't do that
             Future< ? > threadBroadcaster = executorService.submit( () -> this.broadcastMessagesFromQueue() );
             
             Future< ? > threadServerConsole = executorService.submit( () -> this.serverConsole() );
@@ -157,7 +157,7 @@ public class Server implements Runnable, ExecuteWithIF
         this.serverSocket = new ServerSocket( this.port );
     }
     
-    public void connect( ExecutorService executorService )  //.accept() forever....                                //ExecutorService executorService<-I hate this
+    public void connect( ExecutorService executorService )  //.accept() forever....      //TODO: ExecutorService executorService <- I hate this, fix it!
     {
         do {
             
@@ -188,7 +188,7 @@ public class Server implements Runnable, ExecuteWithIF
                 
                 message = this.messageQueue.take();
                 
-                this.broadcastAMessage( message.toString() );
+                this.broadcastAMessage( message.toString() ); //TODO: send only to recipients
                 
             }
             
@@ -229,7 +229,7 @@ public class Server implements Runnable, ExecuteWithIF
         while ( ( inputLine = this.scanner.nextLine() ) != null ) {
             
             if ( !isCommand( inputLine ) ) {
-                message = new Message( inputLine, this.name, Message.ALL );
+                message = new Message( inputLine, this.name, Message.ALL ); //TODO: select recipient
                 this.messageQueue.add( message );
                 
             } else {
@@ -251,7 +251,7 @@ public class Server implements Runnable, ExecuteWithIF
     
     
     //Add Client and Listen to their messages----------------------------------------------------------------------
-    private void addClient( Socket clientSocket, ExecutorService executorService ) //ExecutorService executorService<-I hate this
+    private void addClient( Socket clientSocket, ExecutorService executorService ) //TODO: ExecutorService executorService <- I hate this, fix it!
     {
         try {
             ServerClient serverClient = new ServerClient( clientSocket );
@@ -271,7 +271,7 @@ public class Server implements Runnable, ExecuteWithIF
         
     }
     
-    private void listenToClientOnNewThread( ServerClient serverClient, ExecutorService executorService ) //ExecutorService executorService<-I hate this
+    private void listenToClientOnNewThread( ServerClient serverClient, ExecutorService executorService ) //TODO: ExecutorService executorService <- I hate this, fix it!
     {
         Future< ? > threadAClient = executorService.submit( () -> this.listenToClient( serverClient ) );
         
@@ -378,7 +378,7 @@ public class Server implements Runnable, ExecuteWithIF
     
     
     //Close--------------------------------------------------------------------------------------------
-    public void close()
+    public void close()   //TODO: don't spam the console with repeat and errors when closing
     {
         System.out.println( "SERVER: Closing down....." );
         
