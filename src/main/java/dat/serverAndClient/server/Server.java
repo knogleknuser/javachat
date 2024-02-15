@@ -188,7 +188,9 @@ public class Server implements Runnable, ExecuteWithIF //TODO: unit tests and in
                 
                 message = this.messageQueue.take();
                 
-                this.broadcastAMessage( message.toString() ); //TODO: send only to recipients
+                if ( !message.message().isEmpty() ) {
+                    this.broadcastAMessage( message.toString() ); //TODO: send only to recipients
+                }
                 
             }
             
@@ -203,6 +205,7 @@ public class Server implements Runnable, ExecuteWithIF //TODO: unit tests and in
     
     private void broadcastAMessage( String message )
     {
+        
         System.out.println( message );
         
         for ( ServerClient serverClient : this.clientMap.values() ) {
@@ -228,12 +231,16 @@ public class Server implements Runnable, ExecuteWithIF //TODO: unit tests and in
         // send messages to server. The ressources will be close by receiver
         while ( ( inputLine = this.scanner.nextLine() ) != null ) {
             
-            if ( !isCommand( inputLine ) ) {
-                message = new Message( inputLine, this.name, Message.ALL ); //TODO: select recipient
-                this.messageQueue.add( message );
+            if ( !inputLine.isEmpty() ) {
                 
-            } else {
-                this.runCommand( inputLine );
+                if ( !isCommand( inputLine ) ) {
+                    message = new Message( inputLine, this.name, Message.ALL ); //TODO: select recipient
+                    this.messageQueue.add( message );
+                    
+                } else {
+                    this.runCommand( inputLine );
+                }
+                
             }
             
         }
