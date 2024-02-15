@@ -176,7 +176,7 @@ public class Server implements Runnable, ExecuteWithIF //TODO: unit tests and in
         System.out.println( "SERVER: Stopping Server Connect Thread" );
     }
     
-    private void broadcastMessagesFromQueue() //sendMessage
+    private void broadcastMessagesFromQueue() //SEND ALL THE MESSAGES WE RECEIVE----------------
     {
         try {
             
@@ -203,7 +203,7 @@ public class Server implements Runnable, ExecuteWithIF //TODO: unit tests and in
         System.out.println( "SERVER: Stopping Server Broadcast Thread" );
     }
     
-    private void broadcastAMessage( String message )
+    private void broadcastAMessage( String message ) //SEND A SINGLE MESSAGE-----------------------
     {
         
         System.out.println( message );
@@ -340,7 +340,7 @@ public class Server implements Runnable, ExecuteWithIF //TODO: unit tests and in
     
     
     
-    //ServerConsoleCommands
+    //ServerConsoleCommands-------------------------------------------------------------------------------------------------------- TODO: Separate class maybe, shared with client commands?
     public static boolean isCommand( String inputLine )
     {
         if ( inputLine.startsWith( COMMAND_START ) ) {

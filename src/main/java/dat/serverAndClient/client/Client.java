@@ -106,7 +106,7 @@ public class Client implements Runnable, ExecuteWithIF //TODO: unit tests and in
             String inputLine;
             Message message;
             
-            // send messages to server. The ressources will be close by receiver
+            //Send messages to server.
             while ( ( inputLine = this.scanner.nextLine() ) != null ) {
                 
                 if ( !Server.isCommand( inputLine ) ) {
@@ -131,9 +131,12 @@ public class Client implements Runnable, ExecuteWithIF //TODO: unit tests and in
     
     private void firstConnectedMessages()
     {
-        //Connected, send name!
+        //Connected! now send name!
         Message message = new Message( Server.COMMAND_COMPUTER_MYNAME, this.name, Message.ALL );  //TODO: select recipient
         this.outputStream.println( message );
+        
+        //Other firstConnectedMessages!
+        //Currently, none!
     }
     
     
@@ -141,11 +144,13 @@ public class Client implements Runnable, ExecuteWithIF //TODO: unit tests and in
     {
         System.out.println( "CLIENT: Message Receiver started" );
         try {
+            //START of actual code that receives messages ----------------------------------
             String recievedLine;
             
             while ( ( recievedLine = this.inputStream.readLine() ) != null ) {
                 System.out.println( recievedLine );
             }
+            //END of actual code that receives messages ----------------------------------
             
         } catch ( SocketException e ) {
             System.err.println( "CLIENT: EXCEPTION SOCKET: Receive Message: " );
@@ -165,7 +170,7 @@ public class Client implements Runnable, ExecuteWithIF //TODO: unit tests and in
     
     
     //Close----------------------------------------------------------------------------------
-    public void close()  //TODO: don't spam the console with repeat and errors when closing
+    public void close()  //TODO: don't spam the console with repeat prints and errors when closing
     {
         System.out.println( "CLIENT: Closing down..." );
         try {
@@ -207,7 +212,7 @@ public class Client implements Runnable, ExecuteWithIF //TODO: unit tests and in
     
     
     
-    //Commands--------------------------------------------------------------------------------------
+    //Commands--------------------------------------------------------------------------------------  TODO: Separate class maybe, shared with client commands?
     private void runCommand( String inputLine )
     {
         if ( !Server.isCommand( inputLine ) ) {
