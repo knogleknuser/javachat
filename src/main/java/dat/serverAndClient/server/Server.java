@@ -267,7 +267,7 @@ public class Server implements Runnable, ExecuteWithIF //TODO: unit tests and in
             //First message is always name
             setServerClientName( serverClient );
             
-            clientConnected(serverClient);
+            this.clientConnected(serverClient);
             
             this.listenToClientOnNewThread( serverClient, executorService );
             
