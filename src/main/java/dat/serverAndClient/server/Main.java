@@ -1,11 +1,15 @@
 package dat.serverAndClient.server;
 
+import jdk.jfr.Label;
+import jdk.jfr.Name;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static dat.util.ConnectionMaster.PORT_DEFAULT;
-
+//@Name( "SERVER" )
+//@Label( "SERVER" )
 public class Main
 {
     
