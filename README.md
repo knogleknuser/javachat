@@ -1,16 +1,16 @@
-# Lille chat client/server demo på 2. semester
+# Lille chat clientWithUI/server demo på 2. semester
 
 Her er et link til [opgavebeskrivelsen](https://github.com/dat2Cph/content/blob/main/threads/Bornholm/exercises_chatserver.md).
 
-## Sådan startes server og client
+## Sådan startes server og clientWithUI
 
 
-## Sådan starter du en ekstra client på din egen maskine
+## Sådan starter du en ekstra clientWithUI på din egen maskine
 
 
-## Sådan forbinder du en ekstra client til en server på en anden maskine
+## Sådan forbinder du en ekstra clientWithUI til en server på en anden maskine
 
 
-## Skitse over chatserver og chat client med diverse klasser og tråde
+## Skitse over chatserver og chat clientWithUI med diverse klasser og tråde
 
 ![Chatserver](./images/chatserver.png)
