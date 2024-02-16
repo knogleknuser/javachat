@@ -1,6 +1,7 @@
 package dat.serverAndClient.server;
 
 import dat.serverAndClient.ChatIF;
+import dat.serverAndClient.ConsoleCommands;
 import dat.serverAndClient.Message;
 import dat.executeWith.ExecuteWithIF;
 import dat.util.Colors;
@@ -17,13 +18,6 @@ import java.util.concurrent.*;
 
 public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit tests and integration tests
 {
-    
-    public static final String COMMAND_START = "/";
-    public static final String COMMAND_HELP = COMMAND_START + "help";
-    public static final String COMMAND_EXIT = COMMAND_START + "exit";
-    
-    public static final String COMMAND_COMPUTER_START = Colors.RESET_ANSI;
-    public static final String COMMAND_COMPUTER_MYNAME = COMMAND_COMPUTER_START + "myname";
     
     public static final int MESSAGE_QUEUE_SIZE_DEFAULT = 50;
     public static final int MAX_ACTIVE_CLIENTS_DEFAULT = 100; //_AND_MAX_THREADS_FOR_CLIENTS_DEFAULT
@@ -283,12 +277,12 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             
             if ( !inputLine.isEmpty() ) {
                 
-                if ( !isCommand( inputLine ) ) {
+                if ( !ConsoleCommands.isCommand( inputLine ) ) {
                     message = new Message( inputLine, this.name, Message.ALL ); //TODO: select recipient
                     this.messageQueue.add( message );
                     
                 } else {
-                    this.runCommand( inputLine );
+                    ConsoleCommands.runCommand( inputLine, this);
                 }
                 
             }
@@ -372,7 +366,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
         
         Message message = Message.createMessage( rawMessage );
         
-        if ( !Objects.equals( message.message(), COMMAND_COMPUTER_MYNAME ) ) {  //Check it actually is the name setter request
+        if ( !Objects.equals( message.message(), ConsoleCommands.COMMAND_COMPUTER_MYNAME ) ) {  //Check it actually is the name setter request
             System.err.println( "SERVER: CLient's first message was wrong?" );
         }
         
@@ -391,47 +385,6 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
         Message message = new Message( Colors.BLUE_ANSI + serverClient.getName() + Colors.RESET_ANSI + " has disconnected.", this.name, Message.ALL );
         
         this.sendMessage( message );
-    }
-    
-    
-    
-    
-    
-    //ServerConsoleCommands-------------------------------------------------------------------------------------------------------- TODO: Separate class maybe, shared with client commands?
-    public static boolean isCommand( String inputLine )
-    {
-        if ( inputLine.startsWith( COMMAND_START ) ) {
-            return true;
-        }
-        return false;
-    }
-    
-    public static void printCommandHelp()
-    {
-        System.out.println( COMMAND_HELP );
-        System.out.println( COMMAND_EXIT );
-    }
-    
-    private void runCommand( String inputLine )
-    {
-        if ( !isCommand( inputLine ) ) {
-            System.err.println( "ERROR: SERVER-CONSOLE THOUGHT NON-COMMAND WAS A COMMAND?" );
-        }
-        
-        switch ( inputLine ) {
-            
-            case COMMAND_HELP:
-                printCommandHelp();
-                return;
-            
-            case COMMAND_EXIT:
-                this.close();
-                return;
-            
-            default:
-                System.out.println( "\"" + inputLine + "\" is not a recognized command" );
-                return;
-        }
     }
     
     
