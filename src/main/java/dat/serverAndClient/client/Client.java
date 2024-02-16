@@ -1,8 +1,8 @@
 package dat.serverAndClient.client;
 
 import dat.serverAndClient.ChatIF;
+import dat.serverAndClient.ConsoleCommands;
 import dat.serverAndClient.Message;
-import dat.serverAndClient.server.Server;
 import dat.executeWith.ExecuteWithIF;
 
 import java.io.BufferedReader;
@@ -122,12 +122,12 @@ public class Client implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             //Send messages to server.
             while ( ( inputLine = this.scanner.nextLine() ) != null ) {
                 
-                if ( !Server.isCommand( inputLine ) ) {
+                if ( !ConsoleCommands.isCommand( inputLine ) ) {
                     message = new Message( inputLine, this.name, Message.ALL );
                     this.sendMessage( message );
                     
                 } else {
-                    this.runCommand( inputLine );
+                    ConsoleCommands.runCommand( inputLine,this );
                 }
                 
             }
@@ -157,7 +157,7 @@ public class Client implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     private void firstConnectedMessages()
     {
         //Connected! now send name!
-        Message message = new Message( Server.COMMAND_COMPUTER_MYNAME, this.name, Message.ALL );  //TODO: select recipient
+        Message message = new Message( ConsoleCommands.COMMAND_COMPUTER_MYNAME, this.name, Message.ALL );  //TODO: select recipient
         this.outputStream.println( message );
         
         //Other firstConnectedMessages!
@@ -262,33 +262,7 @@ public class Client implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     
     
     
-    //Commands--------------------------------------------------------------------------------------  TODO: Separate class maybe, shared with client commands?
-    private void runCommand( String inputLine )
-    {
-        if ( !Server.isCommand( inputLine ) ) {
-            System.err.println( "ERROR: CLIENT-CONSOLE THOUGHT NON-COMMAND WAS A COMMAND?" );
-        }
-        
-        switch ( inputLine ) {
-            
-            case Server.COMMAND_HELP:
-                Server.printCommandHelp();
-                return;
-            
-            case Server.COMMAND_EXIT:  //TODO: tell server we are leaving
-                this.close();
-                return;
-            
-            default:
-                System.out.println( "\"" + inputLine + "\" is not a recognized command" );
-                return;
-            
-        }
-    }
-    
-    
-    
-    
+    //Getters Unique-----------------------------------------------------------------------------------
     public boolean isRunning()
     {
         if ( this.clientSocket.isBound() && this.clientSocket.isConnected() && !this.clientSocket.isClosed() ) {
@@ -296,6 +270,8 @@ public class Client implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
         }
         return false;
     }
+    
+    
     
     //Getters and Setters--------------------------------------------------------------------------------------------
     @Override
