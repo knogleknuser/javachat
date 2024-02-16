@@ -11,8 +11,11 @@ public interface ChatIF
     Message receiveMessage() throws IOException;
     void close();
     
+    //Getters Only-------------------------------------
+    boolean isRunning();
     
-    //Getters and Setters
+    
+    //Getters and Setters-------------------------------------
     String getName();
     void setName(String name);
     

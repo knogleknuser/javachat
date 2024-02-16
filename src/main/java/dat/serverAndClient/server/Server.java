@@ -4,7 +4,9 @@ import dat.serverAndClient.ChatIF;
 import dat.serverAndClient.ConsoleCommands;
 import dat.serverAndClient.Message;
 import dat.executeWith.ExecuteWithIF;
+import dat.serverAndClient.client.Client;
 import dat.util.Colors;
+import dat.util.ThreadsUtil;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -33,7 +35,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     private ServerSocket serverSocket;
     
     private final BlockingQueue< Message > messageQueue;
-    private final ConcurrentMap< String, ServerClient > clientMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap< String, Client > clientMap = new ConcurrentHashMap<>();
     
     private final ArrayList< Future< ? > > serverThreads = new ArrayList<>();
     private final ArrayList< Future< ? > > clientsThreads = new ArrayList<>();
@@ -137,16 +139,16 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             this.serverThreads.add( threadServerConsole );
             
         } catch ( BindException e ) {
-            System.err.println("SERVER: EXCEPTION BIND: Never even got to connect");
+            System.err.println( "SERVER: EXCEPTION BIND: Never even got to connect" );
             e.printStackTrace();
             this.close();
             
         } catch ( SocketException e ) {
-            System.err.println("SERVER: EXCEPTION SOCKET: Close down maybe?");
+            System.err.println( "SERVER: EXCEPTION SOCKET: Close down maybe?" );
             e.printStackTrace();
             
         } catch ( IOException e ) {
-            System.err.println("SERVER: EXCEPTION IO: Close down maybe?");
+            System.err.println( "SERVER: EXCEPTION IO: Close down maybe?" );
             e.printStackTrace();
         }
         //Then go die
@@ -244,12 +246,12 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
         
         System.out.println( message.toString() );
         
-        for ( ServerClient serverClient : this.clientMap.values() ) {
+        for ( Client client : this.clientMap.values() ) {
             
             try {
                 
-                if ( serverClient != null ) {
-                    serverClient.sendMessage( message );
+                if ( client != null ) {
+                    client.sendMessage( message );
                 }
                 
             } catch ( Exception e ) {
@@ -282,7 +284,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
                     this.messageQueue.add( message );
                     
                 } else {
-                    ConsoleCommands.runCommand( inputLine, this);
+                    ConsoleCommands.runCommand( inputLine, this );
                 }
                 
             }
@@ -301,47 +303,48 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     
     
     
-    //Add Client and Listen to their messages----------------------------------------------------------------------
+    //Add ClientWithUI and Listen to their messages----------------------------------------------------------------------
     private void addClient( Socket clientSocket, ExecutorService executorService ) //TODO: ExecutorService executorService <- I hate this, fix it!
     {
         try {
-            ServerClient serverClient = new ServerClient( clientSocket );
-            Server.this.clientMap.put( serverClient.toString(), serverClient );
+            Client client = new Client( clientSocket );
+            client.connect();
             
             //First message is always name
-            setServerClientName( serverClient );
+            setServerClientName( client );
             
-            this.clientConnected( serverClient );
+            Server.this.clientMap.put( client.toString(), client );
+            this.clientConnected( client );
             
-            this.listenToClientOnNewThread( serverClient, executorService );
+            this.listenToClientOnNewThread( client, executorService );
             
         } catch ( IOException e ) {
-            System.out.println( "SERVER: IO EXCEPTION: On add Client" );
+            System.out.println( "SERVER: IO EXCEPTION: On add ClientWithUI" );
             e.printStackTrace();
         }
         
     }
     
-    private void listenToClientOnNewThread( ServerClient serverClient, ExecutorService executorService ) //TODO: ExecutorService executorService <- I hate this, fix it!
+    private void listenToClientOnNewThread( Client client, ExecutorService executorService ) //TODO: ExecutorService executorService <- I hate this, fix it!
     {
-        Future< ? > threadAClient = executorService.submit( () -> this.listenToClient( serverClient ) );
+        Future< ? > threadAClient = executorService.submit( () -> this.listenToClient( client ) );
         
         this.clientsThreads.add( threadAClient ); //Does not remove clients who disconnect -TO-DO fix this!
     }
     
-    private void listenToClient( ServerClient serverClient )
+    private void listenToClient( Client client )
     {
         try {
             Message message;
             
             do {
-                message = serverClient.receiveMessage();
+                message = client.receiveMessage();
                 
                 if ( message != null ) {
                     Server.this.messageQueue.add( message );
                 }
                 
-            } while ( serverClient.isRunning() && message != null );
+            } while ( client.isRunning() && message != null );
             
         } catch ( SocketException e ) {
             System.err.println( "SERVER - SERVERCLIENT: EXCEPTION SOCKET: on listenToClient: " );
@@ -352,17 +355,17 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             e.printStackTrace();
             
         } finally {
-            serverClient.close();
-            this.clientDisconnected( serverClient );
-            Server.this.clientMap.remove( serverClient.toString() );
+            client.close();
+            this.clientDisconnected( client );
+            Server.this.clientMap.remove( client.toString() );
         }
         
     }
     
-    private static void setServerClientName( ServerClient serverClient ) throws IOException
+    private static void setServerClientName( Client client ) throws IOException
     {
-        serverClient.receiveMessage();
-        String rawMessage = serverClient.getLastInput();
+        client.receiveMessage();
+        String rawMessage = client.getLastInput();
         
         Message message = Message.createMessage( rawMessage );
         
@@ -370,19 +373,19 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             System.err.println( "SERVER: CLient's first message was wrong?" );
         }
         
-        serverClient.setName( message.sender() );
+        client.setName( message.sender() );
     }
     
-    private void clientConnected( ServerClient serverClient )
+    private void clientConnected( Client client )
     {
-        Message message = new Message( Colors.BLUE_ANSI + serverClient.getName() + Colors.RESET_ANSI + " has connected.", this.name, Message.ALL );
+        Message message = new Message( Colors.BLUE_ANSI + client.getName() + Colors.RESET_ANSI + " has connected.", this.name, Message.ALL );
         
         this.sendMessage( message );
     }
     
-    private void clientDisconnected( ServerClient serverClient )
+    private void clientDisconnected( Client client )
     {
-        Message message = new Message( Colors.BLUE_ANSI + serverClient.getName() + Colors.RESET_ANSI + " has disconnected.", this.name, Message.ALL );
+        Message message = new Message( Colors.BLUE_ANSI + client.getName() + Colors.RESET_ANSI + " has disconnected.", this.name, Message.ALL );
         
         this.sendMessage( message );
     }
@@ -398,7 +401,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     @Override
     public synchronized void close()   //TODO: don't spam the console with repeat and errors when closing
     {
-        System.out.println( "SERVER: Closing down....." );
+        System.out.println( "SERVER: Closing down socket and streams....." );
         
         try {
             
@@ -407,61 +410,47 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
                 this.serverSocket = null;
             }
             
-            if ( this.localExecutorService != null ) {
-                this.localExecutorService.shutdownNow();
-                this.localExecutorService = null;
-            }
-            
-            System.out.println( "Amount of clients at shutdown: " + this.clientMap.size() );
-            
-            this.closeClients();
-            
-            this.threadsServerClose();
-            
-            this.threadsClientsClose();
-            
-            this.scanner.close();
-            
         } catch ( IOException e ) {
-            throw new RuntimeException( e );
+            System.err.println( "SERVER: EXCEPTION IO: Failed to close down socket and streams! " );
+            e.printStackTrace();
         }
-        System.out.println( "SERVER: finished closing!" );
+        
+        System.out.println( "SERVER: Closing down socket and streams... FINISHED!" );
+        
+        System.out.println( "SERVER: Closing down localExecutorService, threads and scanner..." );
+        
+        if ( this.localExecutorService != null ) {
+            this.localExecutorService.shutdownNow();
+            this.localExecutorService = null;
+        }
+        
+        System.out.println( "Amount of clients at shutdown: " + this.clientMap.size() );
+        
+        this.closeClients();
+        
+        ThreadsUtil.closeThreads( this.serverThreads );
+        ThreadsUtil.closeThreads( this.clientsThreads );
+        
+        this.scanner.close();
+        
+        System.out.println( "SERVER:Closing down localExecutorService, threads and scanner... FINISHED!" );
     }
     
     private void closeClients()
     {
-        for ( ServerClient serverClient : this.clientMap.values() ) {
-            serverClient.close();
+        for ( Client client : this.clientMap.values() ) {
+            client.close();
         }
         this.clientMap.clear();
     }
     
-    private void threadsServerClose()
-    {
-        for ( Future< ? > serverThread : this.serverThreads ) {
-            
-            if ( !Thread.currentThread().equals( serverThread ) ) {
-                serverThread.cancel( true );
-            }
-            
-        }
-        this.serverThreads.clear();
-    }
-    
-    private void threadsClientsClose()
-    {
-        for ( Future< ? > clientsThread : this.clientsThreads ) {
-            
-            if ( !Thread.currentThread().equals( clientsThread ) ) {
-                clientsThread.cancel( true );
-            }
-            
-        }
-        this.clientsThreads.clear();
-    }
     
     
-    //Unique Getters------------------------------------------------------------------------------------
+    
+    
+    
+    //Getters Only-------------------------------------
+    @Override
     public boolean isRunning()
     {
         if ( this.serverSocket.isBound() && !this.serverSocket.isClosed() ) {
