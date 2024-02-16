@@ -1,13 +1,18 @@
 package dat.serverAndClient.server;
 
+import dat.serverAndClient.ChatIF;
+import dat.serverAndClient.Message;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Objects;
 
 
-public class ServerClient //TODO: unit tests and integration tests
+public class ServerClient implements ChatIF //TODO: unit tests and integration tests
 {
     
     private final Socket clientSocket;
@@ -17,6 +22,8 @@ public class ServerClient //TODO: unit tests and integration tests
     
     private String lastInput;
     private String name;
+    private int port;
+    private String ip;
     
     
     
@@ -27,32 +34,56 @@ public class ServerClient //TODO: unit tests and integration tests
         
         this.outputStream = new PrintWriter( clientSocket.getOutputStream(), true );
         this.inputStream = new BufferedReader( new InputStreamReader( clientSocket.getInputStream() ) );
+        
+        //Info
+        this.port = clientSocket.getPort();
+        this.ip = String.valueOf( clientSocket.getInetAddress() );
     }
     
     
     
+    
+    @Override
+    public boolean connect() throws IOException
+    {
+        if ( this.isRunning() ) {
+            return false;
+        }
+        
+        this.clientSocket.connect( new InetSocketAddress( this.ip, this.port ) );
+        return true;
+    }
     
     //Send, Receive, Close-----------------------------------------------------------------------
-    public void sendMessage( String message )
+    @Override
+    public boolean sendMessage( Message message )
     {
         if ( !this.isRunning() ) {
             this.close();
+            return false;
         }
         
-        this.outputStream.println( message );
-        
+        this.outputStream.println( message.toString() );
+        return true;
     }
     
-    public void receiveMessage() throws IOException
+    @Override
+    public Message receiveMessage() throws IOException
     {
         if ( !this.isRunning() ) {
             this.close();
+            return null;
         }
         
-        this.lastInput = this.inputStream.readLine();
+        String rawMessage = this.inputStream.readLine();
+        
+        this.lastInput = rawMessage;
+        
+        return Message.createMessage( rawMessage );
     }
     
-    public void close()   //TODO: don't spam the console with repeat and errors when closing
+    @Override
+    public synchronized void close()   //TODO: don't spam the console with repeat and errors when closing
     {
         System.out.println( "SERVERCLIENT: Closing down..." );
         try {
@@ -95,16 +126,50 @@ public class ServerClient //TODO: unit tests and integration tests
     
     
     
-    //Set and Get Name----------------------------------------------------------
-    public void setName( String name )
-    {
-        this.name = name;
-    }
-    
+    //Getters and Setters----------------------------------------------------------
+    @Override
     public String getName()
     {
         return this.name;
     }
     
-
+    @Override
+    public void setName( String name )
+    {
+        this.name = ChatIF.setName( this, name );
+    }
+    
+    @Override
+    public int getPort()
+    {
+        return this.clientSocket.getPort();
+    }
+    
+    @Override
+    public void setPort( int port ) //TODO: Check this is a valid port
+    {
+        if ( port < 0 ) {
+            return;
+        }
+        
+        this.port = port;
+        System.out.println("SERVERCLIENT: port set, remember to reconnect!");
+        return;
+    }
+    
+    @Override
+    public String getIp()
+    {
+        return String.valueOf( this.clientSocket.getInetAddress() );
+    }
+    
+    @Override
+    public void setIp( String ip )  //TODO: Check this is a valid ip
+    {
+        this.ip = ip;
+        
+        System.out.println("SERVERCLIENT:ip set, remember to reconnect!");
+        return;
+    }
+    
 }
