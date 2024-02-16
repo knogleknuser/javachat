@@ -118,7 +118,7 @@ public class ServerClient implements ChatIF //TODO: unit tests and integration t
     
     public boolean isRunning()
     {
-        if ( this.clientSocket.isBound() && this.clientSocket.isConnected() && !this.clientSocket.isClosed() ) { //TODO: make this work, cannot currently detect clients who have disconnected. Will also free up the thread, currently it is lost forever(until server restart)
+        if ( this.clientSocket.isBound() && this.clientSocket.isConnected() && !this.clientSocket.isClosed() ) {
             return true;
         }
         return false;
