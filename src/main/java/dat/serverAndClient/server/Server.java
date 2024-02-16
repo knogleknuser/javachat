@@ -274,7 +274,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
         String inputLine;
         Message message;
         
-        // send messages to server. The ressources will be close by receiver
+        //Commands and send messages
         while ( ( inputLine = this.scanner.nextLine() ) != null ) {
             
             if ( !inputLine.isEmpty() ) {
