@@ -189,6 +189,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     
     public boolean connect( ExecutorService executorService )  //.accept() forever....      //TODO: ExecutorService executorService <- I hate this, fix it!
     {
+        System.out.println( "SERVER: Started Connect Thread" );
         boolean hadNoErrors = true;
         
         do {
@@ -206,12 +207,14 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             
         } while ( !this.serverSocket.isClosed() );
         
-        System.out.println( "SERVER: Stopping Server Connect Thread" );
+        System.out.println( "SERVER: Stopped Connect Thread" );
         return hadNoErrors;
     }
     
     private void sendMessagesFromQueue() //SEND ALL THE MESSAGES WE RECEIVE----------------
     {
+        System.out.println( "SERVER: Started Broadcast Thread" );
+        
         try {
             
             Message message = new Message( "Server started", this.name, Message.ALL );
@@ -236,7 +239,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             Thread.currentThread().interrupt();
         }
         
-        System.out.println( "SERVER: Stopping Server Broadcast Thread" );
+        System.out.println( "SERVER: Stopped Broadcast Thread" );
     }
     
     @Override
@@ -271,6 +274,8 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     
     public void serverConsole()
     {
+        System.out.println( "SERVER: Started Console Thread" );
+        
         String inputLine;
         Message message;
         
@@ -291,7 +296,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             
         }
         
-        System.out.println( "SERVER: Stopping Server Console Thread" );
+        System.out.println( "SERVER: Stopped Console Thread" );
     }
     
     
@@ -334,6 +339,8 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     
     private void listenToClient( Client client )
     {
+        System.out.println( "SERVER: Starting client thread for client: " + Message.formatName( client.getName() ) );
+        
         try {
             Message message;
             
@@ -358,6 +365,8 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             client.close();
             this.clientDisconnected( client );
             Server.this.clientMap.remove( client.toString() );
+            
+            System.out.println( "SERVER: Stopped client thread for client: " + Message.formatName( client.getName() ) );
         }
         
     }
@@ -370,22 +379,22 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
         Message message = Message.createMessage( rawMessage );
         
         if ( !Objects.equals( message.message(), ConsoleCommands.COMMAND_COMPUTER_MYNAME ) ) {  //Check it actually is the name setter request
-            System.err.println( "SERVER: CLient's first message was wrong?" );
+            System.err.println( "SERVER: Client's first message was wrong?" );
         }
         
-        client.setName( message.sender() );
+        client.setName( message.sender(), false );
     }
     
     private void clientConnected( Client client )
     {
-        Message message = new Message( Colors.BLUE_ANSI + client.getName() + Colors.RESET_ANSI + " has connected.", this.name, Message.ALL );
+        Message message = new Message( Message.formatName( client.getName() ) + " has connected.", this.name, Message.ALL );
         
         this.sendMessage( message );
     }
     
     private void clientDisconnected( Client client )
     {
-        Message message = new Message( Colors.BLUE_ANSI + client.getName() + Colors.RESET_ANSI + " has disconnected.", this.name, Message.ALL );
+        Message message = new Message( Message.formatName( client.getName() ) + " has disconnected.", this.name, Message.ALL );
         
         this.sendMessage( message );
     }
@@ -475,7 +484,12 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     @Override
     public void setName( String name )
     {
-        this.name = ChatIF.setName( this, name );
+        this.setName( name,true );
+    }
+    
+    public void setName( String name, boolean shouldBroadcast )
+    {
+        this.name = ChatIF.setName( this, name, shouldBroadcast );
     }
     
     @Override

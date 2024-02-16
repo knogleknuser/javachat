@@ -140,7 +140,12 @@ public class Client implements ChatIF //TODO: unit tests and integration tests
     @Override
     public void setName( String name )
     {
-        this.name = ChatIF.setName( this, name );
+        this.setName( name,true );
+    }
+    
+    public void setName( String name, boolean shouldBroadcast )
+    {
+        this.name = ChatIF.setName( this, name, shouldBroadcast );
     }
     
     @Override
