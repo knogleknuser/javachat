@@ -25,6 +25,10 @@ public record Message( String message, String sender, String receivers ) //TODO:
     
     public static Message createMessage( String rawMessage )
     {
+        if ( rawMessage == null ) {
+            return null;
+        }
+        
         int endOfReceiverInfo = rawMessage.indexOf( END_OF_RECEIVER );
         
         String sender = rawMessage.substring( 0, endOfReceiverInfo );
