@@ -38,10 +38,10 @@ public interface ChatIF
     static String getNameChangeMessage( String formerName, String newName, boolean shouldBroadcast )
     {
         if (shouldBroadcast) {
-            return "Changed their name from \"" + Message.formatName( formerName ) + "\" to \"" + Message.formatName( newName ) + "\"";
+            return "Changed their name from \"" + Message.dyeName( formerName ) + "\" to \"" + Message.dyeName( newName ) + "\"";
         }
         
-        return "Changed name from \"" + Message.formatName( formerName ) + "\" to \"" + Message.formatName( newName ) + "\"";
+        return "Changed name from \"" + Message.dyeName( formerName ) + "\" to \"" + Message.dyeName( newName ) + "\"";
     }
     
     static String setName( ChatIF chatIF, String newName, boolean shouldBroadcast )

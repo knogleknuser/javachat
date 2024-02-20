@@ -5,7 +5,6 @@ import dat.serverAndClient.ConsoleCommands;
 import dat.serverAndClient.Message;
 import dat.executeWith.ExecuteWithIF;
 import dat.serverAndClient.client.Client;
-import dat.util.Colors;
 import dat.util.ThreadsUtil;
 
 import java.io.IOException;
@@ -339,7 +338,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     
     private void listenToClient( Client client )
     {
-        System.out.println( "SERVER: Starting client thread for client: " + Message.formatName( client.getName() ) );
+        System.out.println( "SERVER: Starting client thread for client: " + Message.dyeName( client.getName() ) );
         
         try {
             Message message;
@@ -366,7 +365,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             this.clientDisconnected( client );
             Server.this.clientMap.remove( client.toString() );
             
-            System.out.println( "SERVER: Stopped client thread for client: " + Message.formatName( client.getName() ) );
+            System.out.println( "SERVER: Stopped client thread for client: " + Message.dyeName( client.getName() ) );
         }
         
     }
@@ -387,14 +386,14 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     
     private void clientConnected( Client client )
     {
-        Message message = new Message( Message.formatName( client.getName() ) + " has connected.", this.name, Message.ALL );
+        Message message = new Message( Message.dyeName( client.getName() ) + " has connected.", this.name, Message.ALL );
         
         this.sendMessage( message );
     }
     
     private void clientDisconnected( Client client )
     {
-        Message message = new Message( Message.formatName( client.getName() ) + " has disconnected.", this.name, Message.ALL );
+        Message message = new Message( Message.dyeName( client.getName() ) + " has disconnected.", this.name, Message.ALL );
         
         this.sendMessage( message );
     }
