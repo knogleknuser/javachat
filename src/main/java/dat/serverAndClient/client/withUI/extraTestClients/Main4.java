@@ -18,7 +18,7 @@ public class Main4 //TODO: make into test
     private static final int PORT = PORT_DEFAULT; //Set this!                     //TODO: same for this one
     private static final String NAME = "STUDENT 4"; //Set this!                       //TODO: and this one
     
-    public static void main( String[] args )
+    public static void main( String[] args ) //TODO: Client main with args instead of duplicate code
     {
         ExecutorService executorService = Executors.newFixedThreadPool( ClientWithUI.THREADS_MINIMUM );
         

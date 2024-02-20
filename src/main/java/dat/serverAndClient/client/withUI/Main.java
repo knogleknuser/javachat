@@ -17,7 +17,7 @@ public class Main
     private static final int PORT = PORT_DEFAULT; //Set this!                     //TODO: same for this one
     private static final String NAME = "STUDENT"; //Set this!                       //TODO: and this one
     
-    public static void main( String[] args )
+    public static void main( String[] args ) //TODO: Accept args as name, ip, port
     {
         ExecutorService executorService = Executors.newFixedThreadPool( ClientWithUI.THREADS_MINIMUM );
         
