@@ -1,6 +1,7 @@
 package dat.serverAndClient.client;
 
 import dat.serverAndClient.ChatIF;
+import dat.serverAndClient.ConsoleCommands;
 import dat.serverAndClient.Message;
 
 import java.io.BufferedReader;
@@ -87,7 +88,7 @@ public class Client implements ChatIF //TODO: unit tests and integration tests
     @Override
     public synchronized void close()   //TODO: don't spam the console with repeat and errors when closing
     {
-        System.out.println( this.type + ": Closing down socket and streams..." );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Closing down socket and streams ..." );
         try {
             
             if ( this.outputStream != null ) {
@@ -103,11 +104,11 @@ public class Client implements ChatIF //TODO: unit tests and integration tests
             }
             
         } catch ( IOException e ) {
-            System.err.println( this.type + ": EXCEPTION IO: Failed to close down socket and streams! " );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - EXCEPTION IO: Failed to close down socket and streams! " );
             e.printStackTrace();
         }
         
-        System.out.println( this.type + ": Closing down socket and streams... FINISHED!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Closing down socket and streams ... FINISHED!" );
     }
     
     
@@ -126,9 +127,12 @@ public class Client implements ChatIF //TODO: unit tests and integration tests
         return this.lastInput;
     }
     
-
     
-    
+    //Getters only
+    public String getType()
+    {
+        return this.type;
+    }
     
     //Getters and Setters----------------------------------------------------------
     @Override
@@ -140,7 +144,7 @@ public class Client implements ChatIF //TODO: unit tests and integration tests
     @Override
     public void setName( String name )
     {
-        this.setName( name,true );
+        this.setName( name, true );
     }
     
     public void setName( String name, boolean shouldBroadcast )
@@ -157,7 +161,7 @@ public class Client implements ChatIF //TODO: unit tests and integration tests
     @Override
     public void setPort( int port ) //TODO: Check this is a valid port
     {
-        System.out.println( "BASE-CLIENT: PORT cannot be set for base client, overwrite setPort method!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - PORT cannot be set for base client, overwrite setPort method!" );
         return;
     }
     
@@ -170,7 +174,7 @@ public class Client implements ChatIF //TODO: unit tests and integration tests
     @Override
     public void setIp( String ip )  //TODO: Check this is a valid ip
     {
-        System.out.println( "BASE-CLIENT: IP cannot be set for base client, overwrite setIp method!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - IP cannot be set for base client, overwrite setIp method!" );
         return;
     }
     

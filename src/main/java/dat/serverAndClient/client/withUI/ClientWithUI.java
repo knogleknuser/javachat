@@ -73,6 +73,7 @@ public class ClientWithUI extends Client implements Runnable, ExecuteWithIF //TO
     @Override
     public void executeWith( ExecutorService executorService )
     {
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Starting threads ..." );
         try {
             this.connect();
             
@@ -86,7 +87,7 @@ public class ClientWithUI extends Client implements Runnable, ExecuteWithIF //TO
             System.out.println( "CLIENT: IO EXCEPTION ON CONNECT!" );
             e.printStackTrace();
         }
-        
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Starting threads ... FINISHED!" );
         //And then go die
     }
     
@@ -96,17 +97,18 @@ public class ClientWithUI extends Client implements Runnable, ExecuteWithIF //TO
     @Override
     public boolean connect() throws IOException
     {
-        
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Connecting to IP:PORT: " + this.ip + ":" + this.port + " ..." );
         this.clientSocket.connect( new InetSocketAddress( this.ip, this.port ) );
         
         super.connect();
         
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Successfully connected! to " + this.ip + ":" + this.port + " ... FINISHED!" );
         return true;
     }
     
     public void sendMessageUI()
     {
-        System.out.println( this.type + ": Message Sender started" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Message Sender ... started" );
         
         try {
             this.firstConnectedMessages();
@@ -128,13 +130,13 @@ public class ClientWithUI extends Client implements Runnable, ExecuteWithIF //TO
             }
             
         } catch ( Exception e ) {
-            System.err.println( this.type + ": EXCEPTION: Error in sendMessages: " );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - EXCEPTION: Error in sendMessages: " );
             e.printStackTrace();
             
         } finally {
             this.close();
         }
-        System.out.println( "CLIENT: Message Sender shutdown" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Message Sender ... shutdown" );
     }
     
     private void firstConnectedMessages()
@@ -150,7 +152,7 @@ public class ClientWithUI extends Client implements Runnable, ExecuteWithIF //TO
     public void receiveMessageUI()
     {
         
-        System.out.println( this.type + ": Message Receiver started" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Message Receiver ... started" );
         try {
             //START of actual code that receives messages ----------------------------------
             Message message;
@@ -166,17 +168,17 @@ public class ClientWithUI extends Client implements Runnable, ExecuteWithIF //TO
             //END of actual code that receives messages ----------------------------------
             
         } catch ( SocketException e ) {
-            System.err.println( this.type + ": EXCEPTION SOCKET: Receive Message: " );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - EXCEPTION SOCKET: Receive Message: " );
             e.printStackTrace();
             
         } catch ( IOException e ) {
-            System.err.println( this.type + ": EXCEPTION IO: Receive Message: " );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - EXCEPTION IO: Receive Message: " );
             e.printStackTrace();
             
         } finally {
             this.close();
         }
-        System.out.println( this.type + ": Message Receiver shutdown" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Message Receiver ... shutdown" );
     }
     
     
@@ -186,7 +188,7 @@ public class ClientWithUI extends Client implements Runnable, ExecuteWithIF //TO
     @Override
     public synchronized void close()  //TODO: don't spam the console with repeat prints and errors when closing
     {
-        System.out.println( this.type + ": Closing down localExecutorService, threads and scanner..." );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Closing down localExecutorService, threads and scanner ..." );
         
         super.close();
         
@@ -199,7 +201,7 @@ public class ClientWithUI extends Client implements Runnable, ExecuteWithIF //TO
         
         this.scanner.close();
         
-        System.out.println( this.type + ":Closing down localExecutorService, threads and scanner... FINISHED!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Closing down localExecutorService, threads and scanner ... FINISHED!" );
     }
     
     
@@ -220,7 +222,7 @@ public class ClientWithUI extends Client implements Runnable, ExecuteWithIF //TO
         }
         
         this.port = port;
-        System.out.println( "CLIENT-UI: PORT set, remember to reconnect!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - PORT set, remember to reconnect!" );
         return;
     }
     
@@ -235,7 +237,7 @@ public class ClientWithUI extends Client implements Runnable, ExecuteWithIF //TO
     {
         this.ip = ip;
         
-        System.out.println( "CLIENT-UI: IP set, remember to reconnect!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - IP set, remember to reconnect!" );
         return;
     }
     

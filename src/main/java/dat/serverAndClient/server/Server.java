@@ -27,6 +27,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     
     private int port;
     private String name;
+    private final String type = "SERVER";
     private final int messageQueueSize;
     private final int maxActiveClients;
     private final Scanner scanner;
@@ -138,16 +139,16 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             this.serverThreads.add( threadServerConsole );
             
         } catch ( BindException e ) {
-            System.err.println( "SERVER: EXCEPTION BIND: Never even got to connect" );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - EXCEPTION BIND: Never even got to connect" );
             e.printStackTrace();
             this.close();
             
         } catch ( SocketException e ) {
-            System.err.println( "SERVER: EXCEPTION SOCKET: Close down maybe?" );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - EXCEPTION SOCKET: Close down maybe?" );
             e.printStackTrace();
             
         } catch ( IOException e ) {
-            System.err.println( "SERVER: EXCEPTION IO: Close down maybe?" );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - EXCEPTION IO: Close down maybe?" );
             e.printStackTrace();
         }
         //Then go die
@@ -157,7 +158,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     {
         int totalThreads = MIN_SERVER_THREADS + this.maxActiveClients;
         
-        System.out.println( "SERVER: Starting local executor service with " + totalThreads + " Threads!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Created local executor service with " + totalThreads + " Threads!" );
         
         return Executors.newFixedThreadPool( totalThreads );
     }
@@ -182,13 +183,13 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             return true;
         }
         
-        System.out.println( "SERVER: Server is already connecting!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Server is already connecting!" );
         return false;
     }
     
     public boolean connect( ExecutorService executorService )  //.accept() forever....      //TODO: ExecutorService executorService <- I hate this, fix it!
     {
-        System.out.println( "SERVER: Started Connect Thread" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Connect Thread" + ConsoleCommands.CONSOLE_END_STARTED );
         boolean hadNoErrors = true;
         
         do {
@@ -206,13 +207,13 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             
         } while ( !this.serverSocket.isClosed() );
         
-        System.out.println( "SERVER: Stopped Connect Thread" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Connect Thread" + ConsoleCommands.CONSOLE_END_STARTED_CLOSE );
         return hadNoErrors;
     }
     
     private void sendMessagesFromQueue() //SEND ALL THE MESSAGES WE RECEIVE----------------
     {
-        System.out.println( "SERVER: Started Broadcast Thread" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Broadcast Thread" + ConsoleCommands.CONSOLE_END_STARTED );
         
         try {
             
@@ -233,12 +234,12 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             }
             
         } catch ( InterruptedException e ) {
-            System.err.println( "SERVER: was interrupted: " + e.getMessage() );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - was interrupted: " + e.getMessage() );
             e.printStackTrace();
             Thread.currentThread().interrupt();
         }
         
-        System.out.println( "SERVER: Stopped Broadcast Thread" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Broadcast Thread" + ConsoleCommands.CONSOLE_END_STARTED_CLOSE );
     }
     
     @Override
@@ -257,7 +258,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
                 }
                 
             } catch ( Exception e ) {
-                System.out.println( "SERVER: EXCEPTION: On sendMessage" );
+                System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - EXCEPTION: On sendMessage" );
                 e.printStackTrace();
                 hadNoErrors = false;
             }
@@ -273,7 +274,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     
     public void serverConsole()
     {
-        System.out.println( "SERVER: Started Console Thread" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Console Thread" + ConsoleCommands.CONSOLE_END_STARTED );
         
         String inputLine;
         Message message;
@@ -295,7 +296,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             
         }
         
-        System.out.println( "SERVER: Stopped Console Thread" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Console Thread" + ConsoleCommands.CONSOLE_END_STARTED_CLOSE );
     }
     
     
@@ -315,7 +316,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             client.connect();
             
             //First message is always name
-            setServerClientName( client );
+            this.setServerClientName( client );
             
             Server.this.clientMap.put( client.toString(), client );
             this.clientConnected( client );
@@ -323,7 +324,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             this.listenToClientOnNewThread( client, executorService );
             
         } catch ( IOException e ) {
-            System.out.println( "SERVER: IO EXCEPTION: On add ClientWithUI" );
+            System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - IO EXCEPTION: On add ClientWithUI" );
             e.printStackTrace();
         }
         
@@ -338,7 +339,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     
     private void listenToClient( Client client )
     {
-        System.out.println( "SERVER: Starting client thread for client: " + Message.dyeName( client.getName() ) );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Thread for " + client.getType() + ": " + Message.dyeName( client.getName() ) + ConsoleCommands.CONSOLE_END_STARTED );
         
         try {
             Message message;
@@ -353,11 +354,11 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             } while ( client.isRunning() && message != null );
             
         } catch ( SocketException e ) {
-            System.err.println( "SERVER - SERVERCLIENT: EXCEPTION SOCKET: on listenToClient: " );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - " + client.getType() + ": " + Message.dyeName( client.getName() ) + ": EXCEPTION SOCKET: on listenToClient: " );
             e.printStackTrace();
             
         } catch ( IOException e ) {
-            System.err.println( "SERVER - SERVERCLIENT: EXCEPTION IO: on listenToClient: " );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - " + client.getType() + ": " + Message.dyeName( client.getName() ) + ": EXCEPTION IO: on listenToClient: " );
             e.printStackTrace();
             
         } finally {
@@ -365,12 +366,12 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             this.clientDisconnected( client );
             Server.this.clientMap.remove( client.toString() );
             
-            System.out.println( "SERVER: Stopped client thread for client: " + Message.dyeName( client.getName() ) );
+            System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Thread for " + client.getType() + ": " + Message.dyeName( client.getName() + ConsoleCommands.CONSOLE_END_STARTED_CLOSE ) );
         }
         
     }
     
-    private static void setServerClientName( Client client ) throws IOException
+    private void setServerClientName( Client client ) throws IOException
     {
         client.receiveMessage();
         String rawMessage = client.getLastInput();
@@ -378,7 +379,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
         Message message = Message.createMessage( rawMessage );
         
         if ( !Objects.equals( message.message(), ConsoleCommands.COMMAND_COMPUTER_MYNAME ) ) {  //Check it actually is the name setter request
-            System.err.println( "SERVER: Client's first message was wrong?" );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Client's first message was wrong?" );
         }
         
         client.setName( message.sender(), false );
@@ -409,7 +410,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     @Override
     public synchronized void close()   //TODO: don't spam the console with repeat and errors when closing
     {
-        System.out.println( "SERVER: Closing down socket and streams....." );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Closing down socket and streams....." );
         
         try {
             
@@ -419,20 +420,20 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
             }
             
         } catch ( IOException e ) {
-            System.err.println( "SERVER: EXCEPTION IO: Failed to close down socket and streams! " );
+            System.err.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - EXCEPTION IO: Failed to close down socket and streams! " );
             e.printStackTrace();
         }
         
-        System.out.println( "SERVER: Closing down socket and streams... FINISHED!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Closing down socket and streams... FINISHED!" );
         
-        System.out.println( "SERVER: Closing down localExecutorService, threads and scanner..." );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Closing down localExecutorService, threads and scanner..." );
         
         if ( this.localExecutorService != null ) {
             this.localExecutorService.shutdownNow();
             this.localExecutorService = null;
         }
         
-        System.out.println( "Amount of clients at shutdown: " + this.clientMap.size() );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Amount of clients at shutdown: " + this.clientMap.size() );
         
         this.closeClients();
         
@@ -441,7 +442,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
         
         this.scanner.close();
         
-        System.out.println( "SERVER:Closing down localExecutorService, threads and scanner... FINISHED!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Closing down localExecutorService, threads and scanner ... FINISHED!" );
     }
     
     private void closeClients()
@@ -483,7 +484,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     @Override
     public void setName( String name )
     {
-        this.setName( name,true );
+        this.setName( name, true );
     }
     
     public void setName( String name, boolean shouldBroadcast )
@@ -506,7 +507,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
         
         this.port = port;
         
-        System.out.println( "SERVER: Port updated, remember to re-host for changes to take effect!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - Port updated, remember to re-host for changes to take effect!" );
     }
     
     @Override
@@ -518,7 +519,7 @@ public class Server implements Runnable, ExecuteWithIF, ChatIF //TODO: unit test
     @Override
     public void setIp( String ip )
     {
-        System.out.println( "SERVER: You cannot set the IP for a server, but nice try!" );
+        System.out.println( ConsoleCommands.consolePrefix( this.type, this.name ) + " - You cannot set the IP for a server, but nice try!" );
     }
     
     

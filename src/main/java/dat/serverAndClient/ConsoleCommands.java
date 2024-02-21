@@ -5,6 +5,13 @@ import dat.util.Colors;
 public class ConsoleCommands
 {
     
+    private static final String CONSOLE_END_PREFIX = " ... ";
+    public static final String CONSOLE_END_STARTED = CONSOLE_END_PREFIX + "Started";
+    public static final String CONSOLE_END_STARTED_CLOSE = CONSOLE_END_PREFIX + "SHUTDOWN";
+    public static final String CONSOLE_END_STARTING = CONSOLE_END_PREFIX + "Starting";
+    public static final String CONSOLE_END_STARTING_CLOSE = CONSOLE_END_PREFIX + "FINISHED!";
+    
+    
     public static final String COMMAND_START = "/";
     public static final String COMMAND_EXIT = COMMAND_START + "exit";
     public static final String COMMAND_HELP = COMMAND_START + "help";
@@ -29,7 +36,7 @@ public class ConsoleCommands
     public static Message runCommand( String inputLine, ChatIF chatIF )
     {
         if ( !isCommand( inputLine ) ) {
-            System.err.println( "ERROR: "+chatIF.getName()+" THOUGHT NON-COMMAND WAS A COMMAND?" );
+            System.err.println( "ERROR: " + chatIF.getName() + " THOUGHT NON-COMMAND WAS A COMMAND?" );
         }
         
         switch ( inputLine ) {
@@ -47,7 +54,7 @@ public class ConsoleCommands
                 return null;
         }
     }
-
+    
     
     
     //Commands--------------------------------------------------------------------------------------------------------
@@ -56,6 +63,13 @@ public class ConsoleCommands
         System.out.println( COMMAND_HELP );
         System.out.println( COMMAND_EXIT );
     }
-
+    
+    
+    
+    //Console Print Out-------------------------------------------------------------------------------------------------
+    public static String consolePrefix( String type, String name )
+    {
+        return type + ": " + name;
+    }
     
 }
