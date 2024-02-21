@@ -11,11 +11,11 @@ import java.util.concurrent.Executors;
 import static dat.util.ConnectionMaster.LOCAL_HOST;
 import static dat.util.ConnectionMaster.PORT_DEFAULT;
 //@Name( "STUDENT 3" )
-//@Label( "STUDENT 3" )
+//@Label( "STUDENT 3" ) //TODO: Display custom console name at top of console
 public class Main3 //TODO: make into test
 {
     
-    private static final String NAME = "STUDENT 3"; //Set this!
+    private static final String NAME = "STUDENT 3";
     
     public static void main( String[] args )
     {

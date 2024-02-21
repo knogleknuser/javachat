@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 
 import static dat.util.ConnectionMaster.PORT_DEFAULT;
 //@Name( "SERVER" )
-//@Label( "SERVER" )
+//@Label( "SERVER" ) //TODO: Display custom console name at top of console
 public class Main
 {
     

@@ -10,7 +10,7 @@ import static dat.util.ConnectionMaster.LOCAL_HOST;
 import static dat.util.ConnectionMaster.PORT_DEFAULT;
 
 //@Name( "STUDENT" )
-//@Label( "STUDENT" )
+//@Label( "STUDENT" ) //TODO: Display custom console name at top of console
 public class Main
 {
     
